@@ -22,3 +22,7 @@ jobs:
         credentials_json: '${{ secrets.GOOGLE_CREDENTIALS }}'
     - id: 'deploy'
       uses: 'google-github-actions/deploy-appengine@v1'
+      with:
+        env_vars: |-
+          OPENAI_API_KEY=OPENAI_API_KEY
+          TELEGRAM_API_KEY=TELEGRAM_API_KEY

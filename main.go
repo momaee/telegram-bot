@@ -14,9 +14,10 @@ import (
 )
 
 func main() {
+	log.Println("Starting telegram bot...")
 	bot, err := tgbotapi.NewBotAPI(os.Getenv("TELEGRAM_API_KEY"))
 	if err != nil {
-		fmt.Println("error new bot api:", err)
+		log.Println("error creating bot:", err)
 		return
 	}
 
