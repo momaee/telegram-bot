@@ -14,7 +14,7 @@ import (
 )
 
 func main() {
-	bot, err := tgbotapi.NewBotAPI("")
+	bot, err := tgbotapi.NewBotAPI(os.Getenv("TELEGRAM_API_KEY"))
 	if err != nil {
 		fmt.Println("error new bot api:", err)
 		return
@@ -32,19 +32,18 @@ func main() {
 	for update := range updates {
 		if update.Message != nil { // If we got a message
 
-			// if update.Message.From.UserName == "sirAlif" {
-			// 	if update.Message.From.LanguageCode == "fa" {
-			// 		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "بیا سرشو بخور")
-			// 		msg.ReplyToMessageID = update.Message.MessageID
-			// 		bot.Send(msg)
-			// 	}
-			// 	if update.Message.From.LanguageCode == "en" {
-			// 		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Come eat it's head")
-			// 		msg.ReplyToMessageID = update.Message.MessageID
-			// 		bot.Send(msg)
-			// 	}
-			// 	continue
-			// }
+			if update.Message.From.UserName == "sirAlif" {
+				if update.Message.From.LanguageCode == "en" {
+					msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Come eat it's head")
+					msg.ReplyToMessageID = update.Message.MessageID
+					bot.Send(msg)
+				} else {
+					msg := tgbotapi.NewMessage(update.Message.Chat.ID, "بیا سرشو بخور")
+					msg.ReplyToMessageID = update.Message.MessageID
+					bot.Send(msg)
+				}
+				continue
+			}
 
 			// If the message is reply to someone else, ignore it.
 			if update.Message.ReplyToMessage != nil && update.Message.ReplyToMessage.From != nil {
@@ -95,7 +94,7 @@ func loop() {
 
 func call(content string) (string, error) {
 	// Set your OpenAI API key as an environment variable.
-	apiKey := ""
+	apiKey := os.Getenv("OPENAI_API_KEY")
 
 	type Messages struct {
 		Role    string `json:"role"`
