@@ -3,19 +3,80 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
+	"hash/crc32"
 	"log"
 	"net/http"
 	"os"
 	"strings"
 
+	secretmanager "cloud.google.com/go/secretmanager/apiv1"
+	"cloud.google.com/go/secretmanager/apiv1/secretmanagerpb"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
+var (
+	telegramAPIKey = "projects/" + os.Getenv("PROJECT_ID") + "/secrets/TELEGRAM_API_KEY/versions/latest"
+	openaiAPIKey   = "projects/" + os.Getenv("PROJECT_ID") + "/secrets/OPENAI_API_KEY/versions/latest"
+)
+
 func main() {
-	log.Println("Starting telegram bot...")
-	bot, err := tgbotapi.NewBotAPI(os.Getenv("TELEGRAM_API_KEY"))
+	// Create the client.
+	ctx := context.Background()
+	client, err := secretmanager.NewClient(ctx)
+	if err != nil {
+		log.Printf("failed to create secretmanager client: %v", err)
+		return
+	}
+	defer client.Close()
+
+	// Build the request.
+	req := &secretmanagerpb.AccessSecretVersionRequest{
+		Name: telegramAPIKey,
+	}
+
+	// Call the API.
+	result, err := client.AccessSecretVersion(ctx, req)
+	if err != nil {
+		log.Printf("failed to access secret version: %v", err)
+		return
+	}
+
+	// Verify the data checksum.
+	crc32c := crc32.MakeTable(crc32.Castagnoli)
+	checksum := int64(crc32.Checksum(result.Payload.Data, crc32c))
+	if checksum != *result.Payload.DataCrc32C {
+		log.Printf("Data corruption detected.")
+		return
+	}
+
+	telegramAPIKey = string(result.Payload.Data)
+
+	// Build the request.
+	req = &secretmanagerpb.AccessSecretVersionRequest{
+		Name: openaiAPIKey,
+	}
+
+	// Call the API.
+	result, err = client.AccessSecretVersion(ctx, req)
+	if err != nil {
+		log.Printf("failed to access secret version: %v", err)
+		return
+	}
+
+	// Verify the data checksum.
+	crc32c = crc32.MakeTable(crc32.Castagnoli)
+	checksum = int64(crc32.Checksum(result.Payload.Data, crc32c))
+	if checksum != *result.Payload.DataCrc32C {
+		log.Printf("Data corruption detected.")
+		return
+	}
+
+	openaiAPIKey = string(result.Payload.Data)
+
+	bot, err := tgbotapi.NewBotAPI(telegramAPIKey)
 	if err != nil {
 		log.Println("error creating bot:", err)
 		return
@@ -33,13 +94,17 @@ func main() {
 	for update := range updates {
 		if update.Message != nil { // If we got a message
 
+			if update.Message.Text == "do my trick to stop the bot" {
+				break
+			}
+
 			if update.Message.From.UserName == "sirAlif" {
 				if update.Message.From.LanguageCode == "en" {
-					msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Come eat it's head")
+					msg := tgbotapi.NewMessage(update.Message.Chat.ID, "You can eat it's head")
 					msg.ReplyToMessageID = update.Message.MessageID
 					bot.Send(msg)
 				} else {
-					msg := tgbotapi.NewMessage(update.Message.Chat.ID, "بیا سرشو بخور")
+					msg := tgbotapi.NewMessage(update.Message.Chat.ID, "تو بیا سرشو بخور")
 					msg.ReplyToMessageID = update.Message.MessageID
 					bot.Send(msg)
 				}
@@ -94,9 +159,6 @@ func loop() {
 }
 
 func call(content string) (string, error) {
-	// Set your OpenAI API key as an environment variable.
-	apiKey := os.Getenv("OPENAI_API_KEY")
-
 	type Messages struct {
 		Role    string `json:"role"`
 		Content string `json:"content"`
@@ -127,7 +189,7 @@ func call(content string) (string, error) {
 		fmt.Println("error:", err)
 		return "", err
 	}
-	req.Header.Set("Authorization", "Bearer "+apiKey)
+	req.Header.Set("Authorization", "Bearer "+openaiAPIKey)
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := http.DefaultClient.Do(req)

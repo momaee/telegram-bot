@@ -11,9 +11,6 @@ jobs:
     permissions:
       contents: 'read'
       id-token: 'write'
-    env:
-      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-      TELEGRAM_API_KEY: ${{ secrets.TELEGRAM_API_KEY }}
     steps:
     - uses: 'actions/checkout@v3'
     - id: 'auth'
@@ -22,7 +19,3 @@ jobs:
         credentials_json: '${{ secrets.GOOGLE_CREDENTIALS }}'
     - id: 'deploy'
       uses: 'google-github-actions/deploy-appengine@v1'
-      with:
-        env_vars: |-
-          OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
-          TELEGRAM_API_KEY=${{ secrets.TELEGRAM_API_KEY }}
