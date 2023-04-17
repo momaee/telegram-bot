@@ -21,9 +21,12 @@ var (
 )
 
 func main() {
-
 	go bot()
 
+	server()
+}
+
+func server() {
 	http.HandleFunc("/", indexHandler)
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -47,6 +50,7 @@ func bot() {
 	}
 	defer client.Close()
 
+	log.Printf("telegramAPIKey: %s", telegramAPIKey)
 	// Build the request.
 	req := &secretmanagerpb.AccessSecretVersionRequest{
 		Name: telegramAPIKey,
@@ -69,6 +73,7 @@ func bot() {
 
 	telegramAPIKey = string(result.Payload.Data)
 
+	log.Printf("openaiAPIKey: %s", openaiAPIKey)
 	// Build the request.
 	req = &secretmanagerpb.AccessSecretVersionRequest{
 		Name: openaiAPIKey,
@@ -137,7 +142,7 @@ func bot() {
 				}
 			}
 
-			response, err := call(update.Message.Text)
+			response, err := chatGPT(update.Message.Text)
 			if err != nil {
 				msg := tgbotapi.NewMessage(update.Message.Chat.ID, err.Error())
 				msg.ReplyToMessageID = update.Message.MessageID
@@ -164,7 +169,7 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, "Hello, World!")
 }
 
-func call(content string) (string, error) {
+func chatGPT(content string) (string, error) {
 	type Messages struct {
 		Role    string `json:"role"`
 		Content string `json:"content"`

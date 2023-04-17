@@ -2,6 +2,8 @@
 
 FROM golang:1.19
 
+ENV PROJECT_ID=714436840989
+
 # Set destination for COPY
 WORKDIR /app
 
