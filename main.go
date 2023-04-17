@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -10,7 +9,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strings"
 
 	secretmanager "cloud.google.com/go/secretmanager/apiv1"
 	"cloud.google.com/go/secretmanager/apiv1/secretmanagerpb"
@@ -23,6 +21,23 @@ var (
 )
 
 func main() {
+
+	go bot()
+
+	http.HandleFunc("/", indexHandler)
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+		log.Printf("Defaulting to port %s", port)
+	}
+
+	log.Printf("Listening on port %s", port)
+	if err := http.ListenAndServe(":"+port, nil); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func bot() {
 	// Create the client.
 	ctx := context.Background()
 	client, err := secretmanager.NewClient(ctx)
@@ -102,11 +117,15 @@ func main() {
 				if update.Message.From.LanguageCode == "en" {
 					msg := tgbotapi.NewMessage(update.Message.Chat.ID, "You can eat it's head")
 					msg.ReplyToMessageID = update.Message.MessageID
-					bot.Send(msg)
+					if _, err := bot.Send(msg); err != nil {
+						log.Println("error sending message:", err)
+					}
 				} else {
 					msg := tgbotapi.NewMessage(update.Message.Chat.ID, "تو بیا سرشو بخور")
 					msg.ReplyToMessageID = update.Message.MessageID
-					bot.Send(msg)
+					if _, err := bot.Send(msg); err != nil {
+						log.Println("error sending message:", err)
+					}
 				}
 				continue
 			}
@@ -122,40 +141,27 @@ func main() {
 			if err != nil {
 				msg := tgbotapi.NewMessage(update.Message.Chat.ID, err.Error())
 				msg.ReplyToMessageID = update.Message.MessageID
-				bot.Send(msg)
+				if _, err := bot.Send(msg); err != nil {
+					log.Println("error sending message:", err)
+				}
 				continue
 			}
 
 			msg := tgbotapi.NewMessage(update.Message.Chat.ID, response)
 			msg.ReplyToMessageID = update.Message.MessageID
-			bot.Send(msg)
+			if _, err := bot.Send(msg); err != nil {
+				log.Println("error sending message:", err)
+			}
 		}
 	}
 }
 
-func loop() {
-	for {
-		reader := bufio.NewReader(os.Stdin)
-		fmt.Println("Enter your question:")
-		input, err := reader.ReadString('\n')
-		if err != nil {
-			fmt.Println("error:", err)
-			return
-		}
-		input = strings.Replace(input, "\n", "", -1)
-
-		if input == "exit" {
-			break
-		}
-
-		output, err := call(input)
-		if err != nil {
-			fmt.Println("error:", err)
-			return
-		}
-
-		fmt.Println("output:", output)
+func indexHandler(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Path != "/" {
+		http.NotFound(w, r)
+		return
 	}
+	fmt.Fprint(w, "Hello, World!")
 }
 
 func call(content string) (string, error) {
