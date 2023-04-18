@@ -1,0 +1,24 @@
+name: Deploy to App Engine
+
+on:
+  push:
+    branches:
+      - release-app-engine
+
+jobs:
+  lint:
+    uses: './.github/workflows/lint.yaml'
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+    steps:
+    - uses: 'actions/checkout@v3'
+    - id: 'auth'
+      uses: 'google-github-actions/auth@v1'
+      with:
+        credentials_json: '${{ secrets.GCP_CREDENTIALS }}'
+    - id: 'deploy'
+      uses: 'google-github-actions/deploy-appengine@v1'
+

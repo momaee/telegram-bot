@@ -1,6 +1,6 @@
 runtime: go120
 env_variables:
-  PROJECT_ID: 714436840989
+  SECRETS_PROJECT_ID: 714436840989
 manual_scaling:
   instances: 1
 
