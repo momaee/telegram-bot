@@ -16,8 +16,8 @@ import (
 )
 
 var (
-	telegramAPIKey = "projects/" + os.Getenv("PROJECT_ID") + "/secrets/TELEGRAM_API_KEY/versions/latest"
-	openaiAPIKey   = "projects/" + os.Getenv("PROJECT_ID") + "/secrets/OPENAI_API_KEY/versions/latest"
+	telegramAPIKey = "projects/" + os.Getenv("SECRETS_PROJECT_ID") + "/secrets/TELEGRAM_API_KEY/versions/latest"
+	openaiAPIKey   = "projects/" + os.Getenv("SECRETS_PROJECT_ID") + "/secrets/OPENAI_API_KEY/versions/latest"
 )
 
 func main() {
