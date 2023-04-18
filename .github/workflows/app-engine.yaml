@@ -6,8 +6,6 @@ on:
       - release-app-engine
 
 jobs:
-  lint:
-    uses: './.github/workflows/lint.yaml'
   deploy:
     runs-on: ubuntu-latest
     permissions:
