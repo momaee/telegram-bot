@@ -114,27 +114,6 @@ func bot() {
 	for update := range updates {
 		if update.Message != nil { // If we got a message
 
-			if update.Message.Text == "do my trick to stop the bot" {
-				break
-			}
-
-			if update.Message.From.UserName == "sirAlif" {
-				if update.Message.From.LanguageCode == "en" {
-					msg := tgbotapi.NewMessage(update.Message.Chat.ID, "You can eat it's head")
-					msg.ReplyToMessageID = update.Message.MessageID
-					if _, err := bot.Send(msg); err != nil {
-						log.Println("error sending message:", err)
-					}
-				} else {
-					msg := tgbotapi.NewMessage(update.Message.Chat.ID, "تو بیا سرشو بخور")
-					msg.ReplyToMessageID = update.Message.MessageID
-					if _, err := bot.Send(msg); err != nil {
-						log.Println("error sending message:", err)
-					}
-				}
-				continue
-			}
-
 			// If the message is reply to someone else, ignore it.
 			if update.Message.ReplyToMessage != nil && update.Message.ReplyToMessage.From != nil {
 				if update.Message.ReplyToMessage.From.UserName != bot.Self.UserName {
