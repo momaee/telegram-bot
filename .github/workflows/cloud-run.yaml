@@ -6,8 +6,6 @@ on:
       - release-cloud-run
 
 jobs:
-  lint:
-    uses: './.github/workflows/lint.yaml'
   deploy:
     runs-on: ubuntu-latest
     env:
