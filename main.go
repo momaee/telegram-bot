@@ -16,12 +16,19 @@ import (
 )
 
 var (
-	telegramAPIKey = "projects/" + os.Getenv("SECRETS_PROJECT_ID") + "/secrets/TELEGRAM_API_KEY/versions/latest"
-	openaiAPIKey   = "projects/" + os.Getenv("SECRETS_PROJECT_ID") + "/secrets/OPENAI_API_KEY/versions/latest"
+	telAPIKeyName = "projects/" + os.Getenv("SECRETS_PROJECT_ID") + "/secrets/TELEGRAM_API_KEY/versions/latest"
+	gptAPIKeyName = "projects/" + os.Getenv("SECRETS_PROJECT_ID") + "/secrets/OPENAI_API_KEY/versions/latest"
+	telAPIKey     string
+	gptAPIKey     string
 )
 
 func main() {
-	go bot()
+	if err := getSecrets(context.Background()); err != nil {
+		log.Println("error getting secrets:", err)
+		return
+	}
+
+	go telBot()
 
 	server()
 }
@@ -48,67 +55,55 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, "Healthy")
 }
 
-func bot() {
-	// Create the client.
-	ctx := context.Background()
+func getSecrets(ctx context.Context) error {
 	client, err := secretmanager.NewClient(ctx)
 	if err != nil {
 		log.Printf("failed to create secretmanager client: %v", err)
-		return
+		return err
 	}
 	defer client.Close()
 
-	log.Printf("telegramAPIKey: %s", telegramAPIKey)
+	telAPIKey, err = getSecret(ctx, client, telAPIKeyName)
+	if err != nil {
+		log.Printf("failed to get telegram api key: %v", err)
+		return err
+	}
+
+	gptAPIKey, err = getSecret(ctx, client, gptAPIKeyName)
+	if err != nil {
+		log.Printf("failed to get openai api key: %v", err)
+		return err
+	}
+
+	return nil
+}
+
+func getSecret(ctx context.Context, client *secretmanager.Client, name string) (string, error) {
 	// Build the request.
 	req := &secretmanagerpb.AccessSecretVersionRequest{
-		Name: telegramAPIKey,
+		Name: name,
 	}
 
 	// Call the API.
 	result, err := client.AccessSecretVersion(ctx, req)
 	if err != nil {
-		log.Printf("failed to access secret version: %v", err)
-		return
+		return "", err
 	}
 
 	// Verify the data checksum.
 	crc32c := crc32.MakeTable(crc32.Castagnoli)
 	checksum := int64(crc32.Checksum(result.Payload.Data, crc32c))
 	if checksum != *result.Payload.DataCrc32C {
-		log.Printf("Data corruption detected.")
-		return
+		return "", fmt.Errorf("Data corruption detected.")
 	}
 
-	telegramAPIKey = string(result.Payload.Data)
-
-	log.Printf("openaiAPIKey: %s", openaiAPIKey)
-	// Build the request.
-	req = &secretmanagerpb.AccessSecretVersionRequest{
-		Name: openaiAPIKey,
-	}
-
-	// Call the API.
-	result, err = client.AccessSecretVersion(ctx, req)
-	if err != nil {
-		log.Printf("failed to access secret version: %v", err)
-		return
-	}
-
-	// Verify the data checksum.
-	crc32c = crc32.MakeTable(crc32.Castagnoli)
-	checksum = int64(crc32.Checksum(result.Payload.Data, crc32c))
-	if checksum != *result.Payload.DataCrc32C {
-		log.Printf("Data corruption detected.")
-		return
-	}
-
-	openaiAPIKey = string(result.Payload.Data)
-
-	botLoop()
+	return string(result.Payload.Data), nil
 }
 
-func botLoop() {
-	bot, err := tgbotapi.NewBotAPI(telegramAPIKey)
+// telBot is a Telegram bot that uses GPT-3 to reply to messages.
+// This function is endless, unless there is an error.
+func telBot() {
+	bot, err := tgbotapi.NewBotAPI(telAPIKey)
 	if err != nil {
 		log.Println("error creating bot:", err)
 		return
@@ -125,31 +120,41 @@ func botLoop() {
 
 	for update := range updates {
 		if update.Message != nil { // If we got a message
-
-			// If the message is reply to someone else, ignore it.
-			if update.Message.ReplyToMessage != nil && update.Message.ReplyToMessage.From != nil {
-				if update.Message.ReplyToMessage.From.UserName != bot.Self.UserName {
-					continue
-				}
-			}
-
-			response, err := chatGPT(update.Message.Text)
-			if err != nil {
-				msg := tgbotapi.NewMessage(update.Message.Chat.ID, err.Error())
-				msg.ReplyToMessageID = update.Message.MessageID
-				if _, err := bot.Send(msg); err != nil {
-					log.Println("error sending message:", err)
-				}
-				continue
-			}
-
-			msg := tgbotapi.NewMessage(update.Message.Chat.ID, response)
-			msg.ReplyToMessageID = update.Message.MessageID
-			if _, err := bot.Send(msg); err != nil {
-				log.Println("error sending message:", err)
+			if err := updateMessage(bot, update); err != nil {
+				// todo: handle update message error
+				log.Println("error updating message:", err)
 			}
 		}
 	}
+}
+
+func updateMessage(bot *tgbotapi.BotAPI, update tgbotapi.Update) error {
+	// If the message is reply to someone else, ignore it.
+	if update.Message.ReplyToMessage != nil && update.Message.ReplyToMessage.From != nil {
+		if update.Message.ReplyToMessage.From.UserName != bot.Self.UserName {
+			return nil
+		}
+	}
+
+	response, err := chatGPT(update.Message.Text)
+	if err != nil {
+		msg := tgbotapi.NewMessage(update.Message.Chat.ID, err.Error())
+		msg.ReplyToMessageID = update.Message.MessageID
+		if _, err := bot.Send(msg); err != nil {
+			// todo: handle send message error
+			log.Println("error sending message:", err)
+		}
+		return nil
+	}
+
+	msg := tgbotapi.NewMessage(update.Message.Chat.ID, response)
+	msg.ReplyToMessageID = update.Message.MessageID
+	if _, err := bot.Send(msg); err != nil {
+		// todo: handle send message error
+		log.Println("error sending message:", err)
+	}
+
+	return nil
 }
 
 func chatGPT(content string) (string, error) {
@@ -172,6 +177,7 @@ func chatGPT(content string) (string, error) {
 			},
 		},
 	}
+
 	payloadBytes, err := json.Marshal(data)
 	if err != nil {
 		return "", err
@@ -180,22 +186,22 @@ func chatGPT(content string) (string, error) {
 
 	req, err := http.NewRequest("POST", "https://api.openai.com/v1/chat/completions", body)
 	if err != nil {
-		fmt.Println("error:", err)
+		log.Printf("error creating request: %v", err)
 		return "", err
 	}
-	req.Header.Set("Authorization", "Bearer "+openaiAPIKey)
+	req.Header.Set("Authorization", "Bearer "+gptAPIKey)
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		fmt.Println("error:", err)
+		log.Printf("error sending request: %v", err)
 		return "", err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		fmt.Println("error:", resp.Status)
-		return "", err
+		log.Printf("error response: %v", resp.Status)
+		return "", fmt.Errorf("error response: %v", resp.Status)
 	}
 
 	type Response struct {
@@ -221,8 +227,13 @@ func chatGPT(content string) (string, error) {
 	var response Response
 	err = json.NewDecoder(resp.Body).Decode(&response)
 	if err != nil {
-		fmt.Println("error:", err)
+		log.Printf("error decoding response: %v", err)
 		return "", err
+	}
+
+	if len(response.Choices) == 0 {
+		log.Printf("no response")
+		return "", fmt.Errorf("no response")
 	}
 
 	return response.Choices[0].Message.Content, nil
