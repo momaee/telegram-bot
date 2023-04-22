@@ -29,7 +29,7 @@ func init() {
 	if env := os.Getenv("ENV"); env == "dev" {
 		telAPIKeyName = "projects/" + os.Getenv("SECRETS_PROJECT_ID") + "/secrets/TELEGRAM_API_KEY_DEV/versions/latest"
 	} else if env == "prod" {
-		telAPIKeyName = "projects/" + os.Getenv("SECRETS_PROJECT_ID") + "/secrets/TELEGRAM_API_KEY_PROD/versions/latest"
+		telAPIKeyName = "projects/" + os.Getenv("SECRETS_PROJECT_ID") + "/secrets/TELEGRAM_API_KEY/versions/latest"
 	} else {
 		log.Println("Invalid ENV", env)
 		return
