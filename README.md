@@ -2,6 +2,16 @@
 
 This repository contains code for a Telegram Bot that can interact with users on the Telegram platform. The bot is built using Golang and connects to the Telegram API via the `telegram-bot-api` library. This bot is also connected to ChatGPT, a large language model trained by OpenAI, to enable it to respond to a wider range of user inputs.
 
+## How does it work?
+
+There are two deployed bots, based on the same codebase. The first one is for dev environments, and the second one is for production. The telegram id of the first bot is [`@momaeedevbot`](https://t.me/momaeedevbot), and the second one is [`@momaeebot`](https://t.me/momaeebot). The dev bot is used for testing and development and is not fully stable, and the production bot is used for actual interactions with users.
+
+There are 4 branches for this repo:
+
+- `dev`: the dev branch, used for development and testing, everything is pushed to this branch first.
+- `release-cloud-run`: the release branch for the production bot, this branch is deployed to Google Cloud Run.
+- `release-app-engine`: the release branch for the production bot, this branch is deployed to Google App Engine.
+- `main`: the main branch, which dev merges into after testing and automatic deployment to Google Cloud Run.
 <!-- ## Getting started
 
 To get started with this bot, you will need to follow these steps:
