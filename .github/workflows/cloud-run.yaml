@@ -33,7 +33,7 @@ jobs:
     - id: 'push'
       run: docker push $IMAGE_NAME
     - id: 'deploy'
-      run: gcloud run deploy ${{ vars.GCP_PROJECT_ID }}-dev --update-env-vars="ENV=$ENV,SECRETS_PROJECT_ID=$SECRETS_PROJECT_ID" --image $IMAGE_NAME --region us-central1 --platform managed
+      run: gcloud run deploy ${{ vars.GCP_APP_NAME }}-dev --update-env-vars="ENV=$ENV,SECRETS_PROJECT_ID=$SECRETS_PROJECT_ID" --image $IMAGE_NAME --region us-central1 --platform managed
   prod:
     if: ${{ github.ref == 'refs/heads/release-cloud-run' }}
     runs-on: ubuntu-latest
@@ -56,4 +56,4 @@ jobs:
     - id: 'push'
       run: docker push $IMAGE_NAME
     - id: 'deploy'
-      run: gcloud run deploy ${{ vars.GCP_PROJECT_ID }} --update-env-vars="ENV=$ENV,SECRETS_PROJECT_ID=$SECRETS_PROJECT_ID" --image $IMAGE_NAME --region us-central1 --platform managed
+      run: gcloud run deploy ${{ vars.GCP_APP_NAME }} --update-env-vars="ENV=$ENV,SECRETS_PROJECT_ID=$SECRETS_PROJECT_ID" --image $IMAGE_NAME --region us-central1 --platform managed
