@@ -1,10 +1,16 @@
 package tgbot
 
 import (
+	"errors"
+	"fmt"
 	"log"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/momaee/telegram-bot/gpt"
+)
+
+var (
+	ErrSendMessage = fmt.Errorf("bot: failed to send message")
 )
 
 type Bot struct {
@@ -37,10 +43,15 @@ func (b *Bot) Start() error {
 	updates := b.client.GetUpdatesChan(u)
 
 	for update := range updates {
-		if update.Message != nil { // If we got a message
+		// If we got a message, process it.
+		if update.Message != nil {
 			if err := b.updateMessage(update); err != nil {
-				// todo: handle update message error
 				log.Println("failed to update message:", err)
+				if errors.Is(err, ErrSendMessage) {
+					continue
+				}
+				// todo: think about this.
+				return err
 			}
 		}
 	}
@@ -56,22 +67,21 @@ func (b *Bot) updateMessage(update tgbotapi.Update) error {
 		}
 	}
 
-	response, err := b.gpt.Chat(update.Message.Text)
-	if err != nil {
-		msg := tgbotapi.NewMessage(update.Message.Chat.ID, err.Error())
-		msg.ReplyToMessageID = update.Message.MessageID
-		if _, err := b.client.Send(msg); err != nil {
-			// todo: handle send message error
-			log.Println("failed to send message:", err)
-		}
-		return nil
+	response := ""
+
+	if res, err := b.gpt.Chat(update.Message.Text); err != nil {
+		log.Println("failed to get response from GPT:", err)
+		response = "Failed to get response from GPT"
+	} else {
+		response = res
 	}
 
 	msg := tgbotapi.NewMessage(update.Message.Chat.ID, response)
 	msg.ReplyToMessageID = update.Message.MessageID
+
 	if _, err := b.client.Send(msg); err != nil {
-		// todo: handle send message error
 		log.Println("failed to send message:", err)
+		return fmt.Errorf("%w: %v", ErrSendMessage, err)
 	}
 
 	return nil
