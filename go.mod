@@ -1,4 +1,4 @@
-module openai-api
+module github.com/momaee/telegram-bot
 
 go 1.20
 

@@ -1,8 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM golang:1.19
-
-ENV SECRETS_PROJECT_ID=714436840989
+FROM golang:1.20
 
 # Set destination for COPY
 WORKDIR /app
