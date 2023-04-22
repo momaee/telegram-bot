@@ -3,6 +3,7 @@
 FROM golang:1.20
 
 ENV SECRETS_PROJECT_ID=714436840989
+ENV ENV=
 
 # Set destination for COPY
 WORKDIR /app
