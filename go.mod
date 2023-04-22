@@ -5,6 +5,7 @@ go 1.20
 require (
 	cloud.google.com/go/secretmanager v1.10.0
 	github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1
+	github.com/logrusorgru/aurora v2.0.3+incompatible
 )
 
 require (
