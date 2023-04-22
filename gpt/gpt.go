@@ -12,6 +12,37 @@ type GPT struct {
 	apiKey string
 }
 
+type Request struct {
+	Model    string    `json:"model"`
+	Messages []Message `json:"messages"`
+}
+
+type Message struct {
+	Role    string `json:"role"`
+	Content string `json:"content"`
+}
+
+type Response struct {
+	ID      string   `json:"id"`
+	Object  string   `json:"object"`
+	Created int      `json:"created"`
+	Model   string   `json:"model"`
+	Usage   Usage    `json:"usage"`
+	Choices []Choice `json:"choices"`
+}
+
+type Usage struct {
+	PromptTokens     int `json:"prompt_tokens"`
+	CompletionTokens int `json:"completion_tokens"`
+	TotalTokens      int `json:"total_tokens"`
+}
+
+type Choice struct {
+	Message      Message `json:"message"`
+	FinishReason string  `json:"finish_reason"`
+	Index        int     `json:"index"`
+}
+
 func New(apiKey string) *GPT {
 	return &GPT{
 		apiKey: apiKey,
@@ -19,19 +50,9 @@ func New(apiKey string) *GPT {
 }
 
 func (c *GPT) Chat(content string) (string, error) {
-	type Messages struct {
-		Role    string `json:"role"`
-		Content string `json:"content"`
-	}
-
-	type Payload struct {
-		Model    string     `json:"model"`
-		Messages []Messages `json:"messages"`
-	}
-
-	data := Payload{
+	data := Request{
 		Model: "gpt-3.5-turbo",
-		Messages: []Messages{
+		Messages: []Message{
 			{
 				Role:    "user",
 				Content: content,
@@ -64,26 +85,6 @@ func (c *GPT) Chat(content string) (string, error) {
 	if resp.StatusCode != http.StatusOK {
 		log.Printf("received wrong status code: %v", resp.Status)
 		return "", fmt.Errorf("received wrong status code: %v", resp.Status)
-	}
-
-	type Response struct {
-		ID      string `json:"id"`
-		Object  string `json:"object"`
-		Created int    `json:"created"`
-		Model   string `json:"model"`
-		Usage   struct {
-			PromptTokens     int `json:"prompt_tokens"`
-			CompletionTokens int `json:"completion_tokens"`
-			TotalTokens      int `json:"total_tokens"`
-		} `json:"usage"`
-		Choices []struct {
-			Message struct {
-				Role    string `json:"role"`
-				Content string `json:"content"`
-			} `json:"message"`
-			FinishReason string `json:"finish_reason"`
-			Index        int    `json:"index"`
-		} `json:"choices"`
 	}
 
 	var response Response
