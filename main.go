@@ -26,12 +26,12 @@ func init() {
 
 	gptAPIKeyName = "projects/" + os.Getenv("SECRETS_PROJECT_ID") + "/secrets/OPENAI_API_KEY/versions/latest"
 
-	if os.Getenv("ENV") == "dev" {
+	if env := os.Getenv("ENV"); env == "dev" {
 		telAPIKeyName = "projects/" + os.Getenv("SECRETS_PROJECT_ID") + "/secrets/TELEGRAM_API_KEY_DEV/versions/latest"
-	} else if os.Getenv("ENV") == "prod" {
+	} else if env == "prod" {
 		telAPIKeyName = "projects/" + os.Getenv("SECRETS_PROJECT_ID") + "/secrets/TELEGRAM_API_KEY_PROD/versions/latest"
 	} else {
-		log.Println("failed to get ENV")
+		log.Println("Invalid ENV", env)
 		return
 	}
 }
