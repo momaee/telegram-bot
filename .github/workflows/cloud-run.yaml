@@ -66,5 +66,6 @@ jobs:
         gcloud run deploy ${{ vars.GCP_APP_NAME }} 
         --update-env-vars="ENV=$ENV,SECRETS_PROJECT_ID=$SECRETS_PROJECT_ID" 
         --image $IMAGE_NAME 
+        --allow-unauthenticated 
         --region us-central1 
         --platform managed
