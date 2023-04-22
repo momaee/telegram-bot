@@ -60,16 +60,19 @@ func (b *Bot) Start() error {
 }
 
 func (b *Bot) updateMessage(update tgbotapi.Update) error {
-	// If the message is reply to someone else, ignore it.
+	asists := []string{}
 	if update.Message.ReplyToMessage != nil && update.Message.ReplyToMessage.From != nil {
+		// If the message is reply to someone else, ignore it.
 		if update.Message.ReplyToMessage.From.UserName != b.client.Self.UserName {
 			return nil
 		}
+
+		asists = append(asists, update.Message.ReplyToMessage.Text)
 	}
 
 	response := ""
 
-	if res, err := b.gpt.Chat(update.Message.Text); err != nil {
+	if res, err := b.gpt.Chat(update.Message.Text, asists...); err != nil {
 		log.Println("failed to get response from GPT:", err)
 		response = "Failed to get response from GPT"
 	} else {

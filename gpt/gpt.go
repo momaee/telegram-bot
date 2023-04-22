@@ -17,8 +17,16 @@ type Request struct {
 	Messages []Message `json:"messages"`
 }
 
+type Role string
+
+const (
+	User      Role = "user"
+	Assistant Role = "assistant"
+	System    Role = "system"
+)
+
 type Message struct {
-	Role    string `json:"role"`
+	Role    Role   `json:"role"`
 	Content string `json:"content"`
 }
 
@@ -49,16 +57,34 @@ func New(apiKey string) *GPT {
 	}
 }
 
-func (c *GPT) Chat(content string) (string, error) {
-	data := Request{
-		Model: "gpt-3.5-turbo",
-		Messages: []Message{
-			{
-				Role:    "user",
-				Content: content,
-			},
+func createRequest(user string, assists ...string) Request {
+	msgs := []Message{
+		{
+			Role:    System,
+			Content: "You are a helpful assistant.",
 		},
 	}
+
+	for _, a := range assists {
+		msgs = append(msgs, Message{
+			Role:    Assistant,
+			Content: a,
+		})
+	}
+
+	msgs = append(msgs, Message{
+		Role:    User,
+		Content: user,
+	})
+
+	return Request{
+		Model:    "gpt-3.5-turbo",
+		Messages: msgs,
+	}
+}
+
+func (c *GPT) Chat(user string, assists ...string) (string, error) {
+	data := createRequest(user, assists...)
 
 	payloadBytes, err := json.Marshal(data)
 	if err != nil {
@@ -66,7 +92,7 @@ func (c *GPT) Chat(content string) (string, error) {
 	}
 	body := bytes.NewReader(payloadBytes)
 
-	req, err := http.NewRequest("POST", "https://api.openai.com/v1/chat/completions", body)
+	req, err := http.NewRequest(http.MethodPost, "https://api.openai.com/v1/chat/completions", body)
 	if err != nil {
 		log.Printf("failed to create request: %v", err)
 		return "", err
