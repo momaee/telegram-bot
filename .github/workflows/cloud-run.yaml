@@ -4,12 +4,15 @@ on:
   push:
     branches:
       - release-cloud-run
+      - dev
 
 jobs:
-  deploy:
+  prod:
+    if: ${{ github.ref == 'refs/heads/release-cloud-run' }}
     runs-on: ubuntu-latest
     env:
       IMAGE_NAME: gcr.io/${{ vars.GCP_PROJECT_ID }}/${{ vars.GCP_APP_NAME }}
+      ENV: prod
     steps:
     - uses: 'actions/checkout@v3'
     - id: 'auth'
@@ -28,3 +31,27 @@ jobs:
       run: docker push $IMAGE_NAME
     - id: 'deploy'
       run: gcloud run deploy ${{ vars.GCP_PROJECT_ID }} --image $IMAGE_NAME --region us-central1 --platform managed
+  dev:
+    if: ${{ github.ref == 'refs/heads/dev' }}
+    runs-on: ubuntu-latest
+    env:
+      IMAGE_NAME: gcr.io/${{ vars.GCP_PROJECT_ID }}/${{ vars.GCP_APP_NAME }}
+      ENV: dev
+    steps:
+    - uses: 'actions/checkout@v3'
+    - id: 'auth'
+      uses: 'google-github-actions/auth@v1'
+      with:
+        credentials_json: '${{ secrets.GCP_CREDENTIALS }}'
+    - id: 'login'
+      uses: google-github-actions/setup-gcloud@v1
+    - id: 'auth-docker'
+      run: gcloud auth configure-docker --quiet
+    - id: 'build'
+      run: docker build . -t $IMAGE_NAME
+    - id: 'test'
+      run: docker run $IMAGE_NAME sh -c "go test -v"
+    - id: 'push'
+      run: docker push $IMAGE_NAME
+    - id: 'deploy'
+      run: gcloud run deploy ${{ vars.GCP_PROJECT_ID }}-dev --image $IMAGE_NAME --region us-central1 --platform managed

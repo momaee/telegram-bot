@@ -12,11 +12,29 @@ import (
 )
 
 var (
-	telAPIKeyName = "projects/" + os.Getenv("SECRETS_PROJECT_ID") + "/secrets/TELEGRAM_API_KEY/versions/latest"
-	gptAPIKeyName = "projects/" + os.Getenv("SECRETS_PROJECT_ID") + "/secrets/OPENAI_API_KEY/versions/latest"
-	telAPIKey     string
-	gptAPIKey     string
+	gptAPIKeyName, telAPIKey string
+	telAPIKeyName, gptAPIKey string
 )
+
+func init() {
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
+
+	if os.Getenv("SECRETS_PROJECT_ID") == "" {
+		log.Println("failed to get SECRETS_PROJECT_ID")
+		return
+	}
+
+	gptAPIKeyName = "projects/" + os.Getenv("SECRETS_PROJECT_ID") + "/secrets/OPENAI_API_KEY/versions/latest"
+
+	if os.Getenv("ENV") == "dev" {
+		telAPIKeyName = "projects/" + os.Getenv("SECRETS_PROJECT_ID") + "/secrets/TELEGRAM_API_KEY_DEV/versions/latest"
+	} else if os.Getenv("ENV") == "prod" {
+		telAPIKeyName = "projects/" + os.Getenv("SECRETS_PROJECT_ID") + "/secrets/TELEGRAM_API_KEY_PROD/versions/latest"
+	} else {
+		log.Println("failed to get ENV")
+		return
+	}
+}
 
 func main() {
 	if err := getSecrets(context.Background()); err != nil {
