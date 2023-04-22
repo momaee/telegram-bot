@@ -3,7 +3,8 @@
 FROM golang:1.20
 
 ENV SECRETS_PROJECT_ID=714436840989
-ENV ENV=
+ENV ENV=${ENV}
+RUN echo "ENV: ${ENV}"
 
 # Set destination for COPY
 WORKDIR /app
