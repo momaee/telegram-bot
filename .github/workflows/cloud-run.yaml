@@ -26,7 +26,7 @@ jobs:
     - id: 'build'
       run: docker build . -t $IMAGE_NAME
     - id: 'test'
-      run: docker run $IMAGE_NAME sh -c "go test -v"
+      run: docker run -e ENV=$ENV $IMAGE_NAME sh -c "go test -v"
     - id: 'push'
       run: docker push $IMAGE_NAME
     - id: 'deploy'
@@ -50,7 +50,7 @@ jobs:
     - id: 'build'
       run: docker build . -t $IMAGE_NAME
     - id: 'test'
-      run: docker run $IMAGE_NAME sh -c "go test -v"
+      run: docker run -e ENV=$ENV $IMAGE_NAME sh -c "go test -v"
     - id: 'push'
       run: docker push $IMAGE_NAME
     - id: 'deploy'
