@@ -6,7 +6,7 @@ import (
 	"log"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	"github.com/momaee/telegram-bot/gpt"
+	"github.com/momaee/telegram-bot-golang/gpt"
 )
 
 var (

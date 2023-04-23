@@ -1,4 +1,4 @@
-module github.com/momaee/telegram-bot
+module github.com/momaee/telegram-bot-golang
 
 go 1.20
 

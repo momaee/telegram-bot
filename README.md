@@ -16,7 +16,7 @@ There are 4 branches for this repo:
 
 To get started with this bot, you will need to follow these steps:
 
-1. Clone this repository to your local machine using `git clone https://github.com/momaee/telegram-bot.git`.
+1. Clone this repository to your local machine using `git clone https://github.com/momaee/telegram-bot-golang.git`.
 2. Create a new Telegram bot using the [BotFather](https://telegram.me/BotFather) bot on Telegram. Follow the instructions to create a new bot and obtain a bot token.
 3. Open the `config.go` file in the project and add the bot token obtained from the BotFather in the `Token` field.
 4. Install the required dependencies using `go get`.

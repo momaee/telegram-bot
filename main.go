@@ -5,10 +5,10 @@ import (
 	"log"
 	"os"
 
-	"github.com/momaee/telegram-bot/gpt"
-	sm "github.com/momaee/telegram-bot/secrets-manager"
-	"github.com/momaee/telegram-bot/server"
-	"github.com/momaee/telegram-bot/tgbot"
+	"github.com/momaee/telegram-bot-golang/gpt"
+	sm "github.com/momaee/telegram-bot-golang/secrets-manager"
+	"github.com/momaee/telegram-bot-golang/server"
+	"github.com/momaee/telegram-bot-golang/tgbot"
 )
 
 var (
